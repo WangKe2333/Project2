@@ -1,171 +1,227 @@
 ---
-title: "金融大数据第五次作业"
-author: "151278033 王珂"
-date: "2017年11月21日"
-output:
-  html_document: default
-  pdf_document: default
+title: "Project1 Mapreduce高级编程"
+author: "wangke"
+date: "2017年12月17日"
+output: pdf_document
 ---
-（更新）11月22日</br>
-1.上次交作业错误的理解了题意，我重新首先用matlab函数random出150个二维点，而后将它们导出为txt文件，在MapReduce上运行计算结果；然后将MapReduce程序的输出导入MATLAB当中画图</br>
-首先，用MATLABrandom150个二维点并导出
+一.实验设计说明</br>
+1.主要设计思路</br>
+KNN方法分类<br>
+(1)首先，要对数据进行文本向量化，寻找工具将输入文件的格式转换为utf-8，解决乱码问题。而后将三个文件夹下的文件传入java文件(knn/inver/knn.java)当中进行类似文档倒排索引的处理。第一，mapper节点进行分词，并得到当前文件的文件名和父文件夹名，发送（word+filePath+fileName，1）的key-value对。第二，combiner汇总后将key设为单词，value设为fileName+词频。第三，reducer节点汇总value中的属于同一个单词的fileName+词频，生成文档列表(knn/stage1)，形如:</br>不无关系	negative67.txt:1;positive368.txt:1;neutral144.txt:1;positive332.txt:1;negative183.txt:1;neutral463.txt:1;positive378.txt:1;</br>
+(2)生成文档列表后，将其(knn/stage1)作为输入文件输入(knn/knn/src/knn3.java)计算每个单词--文档的TF-IDF值。第一，mapper节点对于输入文件进行处理,维护全局变量index，将每个单词替换为index;利用字符串split函数将单词后的文档拆分出来发送(单词index+filename,词频)的key-value对。第二，combiner节点汇总计算具体的TF-IDF值,发送(单词index+filename,tf_idf值)的key-value对。第三，reducer节点汇总并按照固定格式输出(knn/tf_idf),形如:</br>negative86	17705:761.308418750991</br>
+(3)计算出tf_idf值之后，需要汇总形成文本向量化向量格式，将(knn/tf_idf)作为输入(knn/knn/src/knn4.java)汇总形成文本向量化。第一，mapper节点发送(filename,单词index+tf_idf值)的key-value对。第二，相同key值会被发送到同一个combiner节点，故在combiner当中进行汇总，将同一个filename的value值都连接起来，发送连接后的key-value对。第三，reducer输出，并根据tf-idf值直接选择特征(knn/text vector)</br>
+(4)完成文本向量化后，将(knn/text vector)输入到(knn/knn/src/knn5.java)进行knn计算。第一，main函数读入训练集数据，并通过conf.set函数将读入的训练集数据传给mapper节点。第二，mapper按行读入需要预测的数据（文本向量化处理后的）,遍历训练集的数据与所有数据计算距离，并发送(filename,train类型+距离)的key-value对。第二，combiner节点，提取距离值，根据距离该节点最近的n个节点投票决定该节点的类型，输出(filename,类型)的key-value对。第三，reducer节点，汇总输出(knn/final)。完成分类预测任务。</br>
+![程序流程图1](https://github.com/WangKe2333/Project2/raw/master/picture/程序流程图1.png)</br>
+![程序伪代码](https://github.com/WangKe2333/Project2/raw/master/picture/伪代码1.png)</br>
+朴素贝叶斯分类</br>
+(1)首先根据已有数据训练(naive_bayes/inver/bayes.java)。第一，mapper节点进行分词，并得到当前文件的文件名和父文件夹名，发送（word+filePath+fileName，1）的key-value对。第二，combiner汇总后将key设为单词，value设为fileName+词频。第三，reducer节点汇总，统计该词在出现过的文档总数，该词出现条件下，文档为positive negative netural的概率，并输出(naive_bayes/train)。</br>
+(2)而后同样进行文本向量化(naive_bayes/bayes/src/textvector.java和knn/knn/src/knn4.java)，此时不可继续使用word的index，因为无法确保该index与训练集当中的照应，故还是维持文本的形式，比照单词字符串得出结论。结果形如</br>negative0	网站:1085.6920058709784,值:926.8102489142499,估:483.26534407671596,尘埃落定:33.10036603265178,并于:244.94270864162317,股份:3236.101610179844,规:213.36933693493478,1月:887.0898096750677,内部:540.6709045627307,2014-01-12:6.620073206530356,报了:39.720439239182134,市场:3455.678213808846,合:285.8719725274208,报:1487.6584325185731,10:1568.9573499476944,要求:953.2905417403713,质疑:271.4230014677446,放卫星:13.240146413060712,21:317.7635139134571,证监会:503.12556369630704,导致:940.0503953273105,125.:13.240146413060712,中:3726.986119557016,发布:1999.2621083721676,研究报告:278.043074674275,新闻网:297.903294293866,零七:302.27322732449096,过高:33.10036603265178,此前:913.5701025011891,增加:1045.9715666317963,介入:238.32263543509282,投合:6.620073206530356,研:634.1810847788339,方案:509.7456369028374,增:1244.573762827707,监管部门:93.21912147633287,引发:244.94270864162317,31日:615.6668082073231,证券:2293.720372050549,去年:1045.9715666317963,调查:390.584319185291,投:948.3081641552657,证监局:111.86294577159944,责令:46.34051244571249,05:311.14344070692675,强推:19.860219619591067,深圳:938.405822861751,加对:13.240146413060712,次数:26.480292826121424,2014:6.620073206530356,对此:609.0467350007928,日前:589.1865153812017,提交:66.20073206530355,针对:609.0467350007928,事件:459.88099928324215,之前:536.2259297289588,关注:2171.384011741957,热点:244.94270864162317,头条:33.10036603265178,通:522.9857833158982,因在:13.240146413060712,消费:913.5701025011891,具体:549.4660761420196,检查:130.39237257134903,备受:172.12190336978927,处理结果:6.214608098422191,
+negative1	股份:3236.101610179844,称:1886.7208638611514,曾:708.3478330987481,刮起:13.240146413060712,一度:231.70256222856247,上午:225.0824890220321,股价:1436.5558858170873,宣布:483.26534407671596,55:317.7635139134571,却:648.7671742399749,大跌:185.36204978284997,媒体报道:205.22226940244104,卫:218.46241581550174,停:556.08614934855,受此:139.0215373371375,市场:3455.678213808846,飞:410.4445388048821,股票:2255.9027397272553,公司:6009.902990333996,矿:79.44087847836427,3.81:19.860219619591067,涉:79.44087847836427,昨日:834.1292240228248,讯:1555.7172035346337,000007:87.00451337791068,志:231.70256222856247,再度:304.5233675003964,控制:745.752971810663,下午:132.4014641306071,消息:794.4087847836428,告:59.580658858773205,持有:781.168638370582,零七:302.27322732449096,实际:770.6114042043517,冻结:111.86294577159944,后:2846.631478808053,林:503.12556369630704,上市公司:1568.9573499476944,练:79.44087847836427,记者:1655.018301632589,开盘:397.73491829902025,风暴:46.34051244571249,沸沸扬扬:13.240146413060712,波及:13.240146413060712,146.:6.620073206530356,牌:1045.9715666317963,遭:331.0036603265178,11:1059.2117130448569,钛:33.10036603265178,临时:139.0215373371375,时:1343.8748609256622,吟:6.620073206530356,已被:145.64161054366784,2014-05-27:13.240146413060712,隐:19.860219619591067,人:944.620430960173,同花顺:609.0467350007928,闹得:6.620073206530356,股权:847.3693704358856,</br>
+(3)而后读入文件进行朴素贝叶斯分类(naive_bayes/bayes/src/naivebayes.java)。第一，main函数读入训练集数据，并通过conf.set函数将读入的训练集数据传给mapper节点。第二，mapper按行读入需要预测的数据（文本向量化处理后的）,遍历训练集的数据与所有数据计算三个贝叶斯值，贝叶斯值最大的那个表示该数据集是该类的可能性最大，mapper发送key-value对(filename,类型)。第三，combiner和reducer进行汇总，按照要求输出(naive_bayes/final2)</br>
+![程序流程图2](https://github.com/WangKe2333/Project2/raw/master/picture/程序流程图2.png)</br>
+![程序伪代码](https://github.com/WangKe2333/Project2/raw/master/picture/伪代码2.png)</br>
+2.算法设计</br>
+(1)Java 中文分词依然沿用Project1的方法，使用IKAnalyzer分词器进行分词，这里不再赘述。</br>
+(2)文本向量化的设计
+(3)knn距离计算
+(4)训练与预测
+(5)朴素贝叶斯
+3.程序</br>
+(1)设置读取子文件夹</br>
 ```{}
-%随机获取150个点
-X = [randn(50,2)+ones(50,2);randn(50,2)-ones(50,2);randn(50,2)+[ones(50,1),-ones(50,1)]];
-fid = fopen('tt.txt','wt');
-for i = 1:size(X,1)
-    fprintf(fid,'%f,%f\n',X(i,1),X(i,2));
-end
-fclose(fid);
-plot(X(1),X(2),'k')
+    FileInputFormat.setInputDirRecursive(job, true);
+```
+(2)分词</br>
+```{}
+ while (itr.hasMoreTokens()) {
+   	//创建分词对象  
+        Analyzer anal=new IKAnalyzer(true);       
+        StringReader reader=new StringReader(itr.nextToken());
+      //分词  
+        TokenStream ts=anal.tokenStream("", reader);  
+        CharTermAttribute term=ts.getAttribute(CharTermAttribute.class);  
+        while(ts.incrementToken()){  
+      	  word.set(term.toString()+":"+parent+fileName);
+      	  word2.set("1");
+            context.write(word, word2);
+      }
 
 ```
-导出为txt文件</br>
-![txt文件](https://github.com/WangKe2333/Kmeans/raw/master/picture/随机生成150个点.png)
-</br>MapReduce当中运行</br>
+(3)获得文件名</br>
 ```{}
-bin/hdfs dfs -put data/tt.txt /user
-bin/hdfs dfs -ls /user
-bin/hadoop jar share/hadoop/mapreduce/kmeans.jar KMeansDriver 2 2 /user/tt.txt output5
-bin/hdfs dfs -get output5 output3
-cat output3/clusteredInstances/part-m-00000
-
-bin/hdfs dfs -put data/tt.txt /user
-bin/hdfs dfs -ls /user
-bin/hadoop jar share/hadoop/mapreduce/kmeans.jar KMeansDriver 3 10 /user/tt.txt output6
-bin/hdfs dfs -get output6 output4
-cat output4/clusteredInstances/part-m-00000
-
-bin/hdfs dfs -put data/tt.txt /user
-bin/hdfs dfs -ls /user
-bin/hadoop jar share/hadoop/mapreduce/kmeans.jar KMeansDriver 3 2 /user/tt.txt output7
-bin/hdfs dfs -get output7 output5
-cat output5/clusteredInstances/part-m-00000
+     FileSplit fileSplit = (FileSplit) context.getInputSplit();
+	   String fileName = fileSplit.getPath().getName(); 
+	   String parent=fileSplit.getPath().getParent().getName();
 ```
-结果：</br>
-![结果](https://github.com/WangKe2333/Kmeans/raw/master/picture/MapReduce输出.png)
-</br>然后导入MATLAB当中</br>
+(4)TF-IDF计算</br>
 ```{}
-load part-m-00000.txt %导入数据
-M=part_m_00000; 
-M1=M(:,1:2); %前两列为点
-M2=M(:,3);%最后一列为类别
-
-%画出聚类为1的点。X(Idx==1,1),为第一类的样本的第一个坐标；X(Idx==1,2)为第二类的样本的第二个坐标
-plot(M1(M2==1,1),M1(M2==1,2),'r.','MarkerSize',14)
-hold on
-plot(M1(M2==2,1),M1(M2==2,2),'b.','MarkerSize',14)
-hold on
-plot(M1(M2==3,1),M1(M2==3,2),'g.','MarkerSize',14)
-
-legend('Cluster 1','Cluster 2','Cluster3','Centroids','Location','NW')
-```
-画图</br>
-聚类（3，10）</br>
-![聚类3 10](https://github.com/WangKe2333/Kmeans/raw/master/picture/聚类图(3%2C10).png)
-
-聚类（3，2）</br>
-![聚类3 2](https://github.com/WangKe2333/Kmeans/raw/master/picture/聚类图(3%2C2).png)
-
-聚类（2，2）</br>
-![聚类2 2](https://github.com/WangKe2333/Kmeans/raw/master/picture/聚类图(2%2C2).png)
-
-结论：从图形上看MapReduce对于点的聚类结果与MATLAB自带函数的聚类结果相同，迭代次数越多 效果越好</br>
-
-2.在MapReduce上运行6维数据集
-运行KMeans的Java代码和小测试集（Java代码较多，已附件，此处不再贴Java代码）
-输入参数：聚为两类，迭代10次
-
-```{}
-bin/hdfs dfs -mkdir /user
-bin/hdfs dfs -put data/instance.txt /user
-bin/hdfs dfs -ls /user
-bin/hadoop jar share/hadoop/mapreduce/kmeans.jar KMeansDriver 2 10 /user/instance.txt output3
-bin/hdfs dfs -get output3 output2
-cat output2/clusteredInstances/part-m-00000
-```
-结果：</br>
-2,1,3,4,1,4	1</br>
-3,2,5,2,3,5	1</br>
-4,4,4,3,1,5	1</br>
-2,3,1,2,0,3	1</br>
-4,0,1,1,1,5	1</br>
-1,2,3,5,0,1	2</br>
-5,3,2,2,1,3	1</br>
-3,4,1,1,2,1	2</br>
-0,2,3,3,1,4	1</br>
-0,2,5,0,2,2	2</br>
-2,1,4,5,4,3	2</br>
-4,1,4,3,3,2	2</br>
-0,3,2,2,0,1	1</br>
-1,3,1,0,3,0	2</br>
-3,3,4,2,1,3	1</br>
-3,5,3,5,3,2	2</br>
-2,3,2,3,0,1	1</br>
-4,3,3,2,2,3	1</br>
-1,4,3,4,3,1	2</br>
-3,2,3,0,2,5	1</br>
-1,0,2,1,0,4	1</br>
-4,4,3,5,5,4	2</br>
-5,1,4,3,5,2	2</br>
-3,4,4,4,1,1	2</br>
-2,2,4,4,5,5	2</br>
-5,2,0,3,1,3	1</br>
-1,1,3,1,1,3	1</br>
-2,4,2,0,3,5	1</br>
-1,1,1,1,0,4	1</br>
-1,1,4,1,3,0	2</br>
-遇到的问题</br>
-我之前运行hadoop忘记sbin/stop-dfs.sh关闭……结果再次运行的时候已经无法关闭，DataNode和NameNode也都启不启来，报错说local/172.25.169.27正在使用 please shutting down；后来要找到进程号强制杀掉</br>
-http://blog.csdn.net/asia_kobe/article/details/51067769</br>
-一些截图：</br>
-运行程序截图：
-![运行程序](https://github.com/WangKe2333/Kmeans/raw/master/运行程序.png)
-![运行输出](https://github.com/WangKe2333/Kmeans/raw/master/程序运行输出.png)
-</br>运行结果：</br>
-![运行结果](https://github.com/WangKe2333/Kmeans/raw/master/程序运行结果.png)
-
-
-3.MATLAB自带kmeans函数聚类
-以下是MATLAB的代码
-```{}
-%随机获取150个点
-X = [randn(50,2)+ones(50,2);randn(50,2)-ones(50,2);randn(50,2)+[ones(50,1),-ones(50,1)]];
-opts = statset('Display','final');
-
-%调用Matlab内部的Kmeans函数
-
-[Idx,Ctrs,SumD,D] = kmeans(X,3,'Replicates',1,'Options',opts);
-
-%画出聚类为1，2，3，4的点
-plot(X(Idx==1,1),X(Idx==1,2),'r.','MarkerSize',14)
-hold on
-plot(X(Idx==2,1),X(Idx==2,2),'b.','MarkerSize',14)
-hold on
-plot(X(Idx==3,1),X(Idx==3,2),'g.','MarkerSize',14)
-%hold on
-%plot(X(Idx==4,1),X(Idx==4,2),'y.','MarkerSize',14)
-
-%绘出聚类中心点
-plot(Ctrs(:,1),Ctrs(:,2),'kx','MarkerSize',14,'LineWidth',4)
-plot(Ctrs(:,1),Ctrs(:,2),'kx','MarkerSize',14,'LineWidth',4)
-plot(Ctrs(:,1),Ctrs(:,2),'kx','MarkerSize',14,'LineWidth',4)
-%plot(Ctrs(:,1),Ctrs(:,2),'kx','MarkerSize',14,'LineWidth',4)
-
-legend('Cluster 1','Cluster 2','Cluster3','Centroids','Location','NW')
+       int splitIndex = key.toString().indexOf(":");
+       int s=Integer.parseInt(key.toString().substring(splitIndex+1));
+       int tf=sum;
+       double t=1500.0/(double)(s+1);
+       double idf=Math.log(t);
+       double tf_idf=tf*idf;
+       System.out.println(Double.toString(idf));
 
 ```
+(4)主程序读取测试文件</br>
+```{}
+       //读取训练集文件
+		   File file = new File(otherArgs[2]);
+		   BufferedReader reader = null;  
+		   reader = new BufferedReader(new FileReader(file));
+		   String mystr=null;
+		   String tempString = null;
+		   while ((tempString = reader.readLine()) != null) {  
+               // 相加
+               mystr=mystr+tempString+"\n";
+           } 
+		   reader.close(); 
+```
+(5)传参</br>
+```{}
+    conf.set("k", mystr);
+    -------------------------------------------------
+    String train1=context.getConfiguration().get("k");
+    String[] train=train1.split("\n");
 
-运行截图：
-</br>2个类：</br>
-![两个类](https://github.com/WangKe2333/Kmeans/raw/master/2个类.png)
-</br>三个类：</br>
-![三个类](https://github.com/WangKe2333/Kmeans/raw/master/3个类.png)
-</br>四个类：</br>
-![四个类](https://github.com/WangKe2333/Kmeans/raw/master/4个类.png)
+```
+(6)计算距离</br>
+```{}
+   for(String y:train){
+		   String[] train3=y.split("\t");
+		   String[] train2=train3[1].split(",",0);
+		   String[] trainindex=new String[train2.length];
+		   String[] traintfidf=new String[train2.length];
+		   int j=0;
+		   for(String z:train2){
+			   String[] tmp=z.split(":");
+			   trainindex[j]=tmp[0];
+			   traintfidf[j]=tmp[1];
+		   }
+		   double sum=0;
+		   for(int v=0;v<myindex.length;v=v+1){
+			   int flag=0;
+			   for(int u=0;u<trainindex.length;u=u+1){
+				   if(myindex[v].equals(trainindex[u])){
+					   sum=sum+Math.pow((Double.valueOf(traintfidf[u])-Double.valueOf(mytfidf[v])),2);
+				   }
+			   }
+			   if(flag==1){
+				   sum=sum+Math.pow(Double.valueOf(mytfidf[v]),2);
+			   }
+		   }
+```
+(7)朴素贝叶斯</br>
+```{}
+     double sum_negative=0;
+	   double sum_positive=0;
+	   double sum_neutral=0;
+	   for(String y:train){
+		   String[] train3=y.split("\t");
+		   String[] train2=train3[1].split(":",0);
+		   int j=0;
+		   for(int v=0;v<myindex.length;v=v+1){
+			   if(train3[0].indexOf(myindex[v])!=-1){
+				   sum_negative=sum_negative+Double.valueOf(mytfidf[v])*Double.valueOf(train2[0]);
+				   sum_neutral=sum_neutral+Double.valueOf(mytfidf[v])*Double.valueOf(train2[1]);
+				   sum_positive=sum_positive+Double.valueOf(mytfidf[v])*Double.valueOf(train2[2]);
+			   }
+			   
+		   }
+	   }
+	   String type=new String();
+	   double max=sum_negative;
+	   type="negative";
+	   if(sum_negative<sum_neutral){
+		   type="neutral";
+		   max=sum_neutral;
+	   }
+	   if(sum_positive>max){
+		   type="positive";
+	   }
+```
 
-</br>3个类迭代十次：（我觉得好像迭代次数的影响不大）</br>
-![3个类迭代十次](https://github.com/WangKe2333/Kmeans/raw/master/3个类%20迭代10次.png)
+<4>程序类的说明</br>
+1.inver/knn.java文件中</br>
+mapper类：可以做到wordcount的skip-patterns和提取新闻标题，中文分词，停词</br>
+reducer类：累加统计词频，将大于k的部分输出</br>
+comparator类：实现降序输出</br>
+main:接受用户输入k，一次建立wordcount和sort两个job，前一个job的输出正好是后一个job的输入</br>
+![类1](https://github.com/WangKe2333/Project2/raw/master/picture/类1.png)
+</br>2.inver/bayes.java文件中</br>
+mapper类：可以做到wordcount的skip-patterns和提取新闻标题，中文分词，停词</br>
+reducer类：累加统计词频，将大于k的部分输出</br>
+comparator类：实现降序输出</br>
+main:接受用户输入k，一次建立wordcount和sort两个job，前一个job的输出正好是后一个job的输入</br>
+![类2](https://github.com/WangKe2333/Project2/raw/master/picture/类2.png)
+</br>3.knn/knn3.java文件中</br>
+mapper类：可以做到wordcount的skip-patterns和提取新闻标题，中文分词，停词</br>
+reducer类：累加统计词频，将大于k的部分输出</br>
+comparator类：实现降序输出</br>
+main:接受用户输入k，一次建立wordcount和sort两个job，前一个job的输出正好是后一个job的输入</br>
+![类3](https://github.com/WangKe2333/Project2/raw/master/picture/类3.png)
+</br>4.knn/knn4.java文件中</br>
+mapper类：可以做到wordcount的skip-patterns和提取新闻标题，中文分词，停词</br>
+reducer类：累加统计词频，将大于k的部分输出</br>
+comparator类：实现降序输出</br>
+main:接受用户输入k，一次建立wordcount和sort两个job，前一个job的输出正好是后一个job的输入</br>
+![类4](https://github.com/WangKe2333/Project2/raw/master/picture/类4.png)
+</br>5.knn/knn5.java文件中</br>
+mapper类：可以做到wordcount的skip-patterns和提取新闻标题，中文分词，停词</br>
+reducer类：累加统计词频，将大于k的部分输出</br>
+comparator类：实现降序输出</br>
+main:接受用户输入k，一次建立wordcount和sort两个job，前一个job的输出正好是后一个job的输入</br>
+![类5](https://github.com/WangKe2333/Project2/raw/master/picture/类5.png)
+</br>6.naive_bayes/textvector.java文件中</br>
+mapper类：可以做到wordcount的skip-patterns和提取新闻标题，中文分词，停词</br>
+reducer类：累加统计词频，将大于k的部分输出</br>
+comparator类：实现降序输出</br>
+main:接受用户输入k，一次建立wordcount和sort两个job，前一个job的输出正好是后一个job的输入</br>
+![类6](https://github.com/WangKe2333/Project2/raw/master/picture/类6.png)
+</br>7.naive_bayes/naivebayes.java</br>
+mapper类：可以做到wordcount的skip-patterns和提取新闻标题，中文分词，停词</br>
+reducer类：累加统计词频，将大于k的部分输出</br>
+comparator类：实现降序输出</br>
+main:接受用户输入k，一次建立wordcount和sort两个job，前一个job的输出正好是后一个job的输入</br>
+![类7](https://github.com/WangKe2333/Project2/raw/master/picture/类7.png)
+
+
+</br><5>运行结果及分析</br>
+1.文本向量化(knn)</br>
+![text1](https://github.com/WangKe2333/Project2/raw/master/picture/textknn.png)
+2.文本向量化(bayes)</br>
+![text2](https://github.com/WangKe2333/Project2/raw/master/picture/textbayes.png)
+3.预测集(knn)</br>
+![pro1](https://github.com/WangKe2333/Project2/raw/master/picture/pro1.png)
+4.预测结果(knn)</br>
+![final1](https://github.com/WangKe2333/Project2/raw/master/picture/final1.png)
+5.预测集(bayes)</br>
+![pro2](https://github.com/WangKe2333/Project2/raw/master/picture/pro2.png)
+6.预测结果(bayes)</br>
+![final2](https://github.com/WangKe2333/Project2/raw/master/picture/final2.png)
+
+</br>
+#project1过程中遇到的问题及思考</br>
+1.本次实验中最有趣也是最有挑战性的地方在于算法和程序思路需要自己设计，我也在这个过程当中体会到了大数据并行化MapReduce的思想和方法，对于所学的知识和key-value对的设计有了更加深刻的理解，感觉自己通过此次思考和训练收获很大，Java编程也越来越熟练了</br>
+2.首先的问题即是需要批量处理文本文件成utf-8格式，通过搜索我很快在网上找到了合适的工具进行了批量转换；而后一个挑战就是要标记文本原本的属性值：negative positive还是neural，这个标记以什么样的形式添加在哪里就成为一个很值得思考的问题，最后我决定将其与文件名连在一起进行一个标记，那么要进行这个标记就要分成三个文件夹进行读取，并且获取父文件夹的名称，作为自己的属性。通过filesplit和设置参数我实现了这一点</br>
+3.而后便是文本向量化应当如何处理的问题，由于该矩阵为一个稀疏矩阵，我决定用链表的方式进行存储，链表的标记使用单词的index来实现，通过维护一个全局的index实现单词与index之间的一一替换，不过后来我发现其实也不需要进行这个替换，反正是匹配查值，使用单词本身也是可以的。</br>
+4.而后就是如何处理预测集和训练集的问题，经过思考我决定，训练集直接又main函数读入，而后以参数的形式传递给mapper节点，这样便可以保证mapper节点有所有的训练集信息，可以进行全部的距离计算。</br>
+5.在传值和类型转换的时候必须多加注意，不然很容易出bug，比如我最初读入文件到main函数，直接进行了行于行之间的字符串连接，忘记添加换行符，导致后面字符串分割出现问题等等。</br>
+6.为了传值的灵活性和方便，我将key-value的传值方式均设为了text格式</br>
+
+
+#性能扩展性不足及可能的改进之处</br>
+1.程序功能较为单一，在分词方面直接调用了分词器和开源程序的内容，没有做更加细致的处理</br>
+2.只实现了最基础的朴素贝叶斯，思想较为简单，未来还可以有所提升</br>
+3.训练集一次性读入的方式有待改善，若训练集也能够并行读入更好</br>
+
+</br>
+</br>
+</br>
+
+
+
 
 
 
