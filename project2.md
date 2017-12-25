@@ -58,6 +58,10 @@ num2=sorted(num)
             if(num2[i]==num[j]):
                 max.append(train[j])
 ```
+![output1](https://github.com/WangKe2333/Project2/raw/master/picture/output1.png)</br>
+![output2](https://github.com/WangKe2333/Project2/raw/master/picture/output2.png)</br>
+![output3](https://github.com/WangKe2333/Project2/raw/master/picture/output3.png)</br>
+
 
 一.实验设计说明</br>
 1.主要设计思路</br>
