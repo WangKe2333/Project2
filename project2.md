@@ -4,6 +4,61 @@ author: "wangke"
 date: "2017年12月16日"
 output: pdf_document
 ---
+
+(更新 Python版本的实现)</br>
+在完成基本的要求之后,看到很多同学之前使用Python版本的MapReduce，我也想要尝试学习一下，于是我又将KNN和朴素贝叶斯用Python重新实现了一遍，相关代码已经放在了project2 的Python文件夹下，基本的实现思路与Java相同</br>
+在Java和Python两个版本的比较当中，Java的Key-value对使用更加方便，Python利用标准化的sys.stdin和streamming jar包实现，在key-value对的实现上，需要自己写迭代器group相同的key值对相应的value值进行加总等等处理。</br>
+在速度上两者区别也很明显，Java明显运行的比Python要快许多（在我的电脑上），越是调用Python相应的第三方库等等就越是慢~，比如Python的jieba分词，虽然方便，分的却比较慢</br>
+但Python仍然是有很多比较好用的字符串处理接口，在写程序的时候很是方便，也极大的减少了代码量，python的代码量大概只在Java的1/2左右</br>
+
+迭代器实现相应的key-value对group
+```{}
+from itertools import groupby  
+from operator import itemgetter  
+import sys  
+  
+def read_mapper_output(file, separator='\t'):  
+    for line in file:  
+        yield line.rstrip().split(separator, 1)  
+  
+def main(separator='\t'):   
+    data = read_mapper_output(sys.stdin, separator=separator)  
+    for current_word, group in groupby(data, itemgetter(0)):  
+        try: 
+            total_count=0
+            doclist=""
+            for current_word,count in group:
+                doclist=doclist+count+";"
+            print("%s%s%s" % (current_word, separator, doclist))  
+        except ValueError:  
+            pass  
+
+```
+
+python得到文件夹名字得到相应的类型标记
+```{}
+filepath = os.environ["map_input_file"]
+fileparent=os.path.split(filepath)[0]
+filename1 = os.path.split(fileparent)[1]
+filename2=os.path.split(filepath)[1]
+```
+筛选中文字符
+```{}
+if(word >= u'\u4e00' and word <= u'\u9fa5'):
+            print('%s\t%s' % (word+":"+filename1+filename2, "1"))
+```
+
+python 的max和sort接口都更加方便
+```{}
+mymax=num.index(max(num))
+train[mymax].find("negative")
+num2=sorted(num)
+    for i in range(0,k):
+        for j in range(0,len(num)):
+            if(num2[i]==num[j]):
+                max.append(train[j])
+```
+
 一.实验设计说明</br>
 1.主要设计思路</br>
 </br>
