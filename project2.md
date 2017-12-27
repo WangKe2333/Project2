@@ -69,14 +69,11 @@ num2=sorted(num)
 Java:实验设计说明</br>
 ----------------------------
 + 主要设计思路</br>
-</br>
-1. KNN方法分类<br>
-       + (1)首先，要对数据进行文本向量化，寻找工具将输入文件的格式转换为utf-8，解决乱码问题。而后将三个文件夹下的文件传入java文件(knn/inver/knn.java)当中进行类似文档倒排索引的处理。第一，mapper节点进行分词，并得到当前文件的文件名和父文件夹名，发送（word+filePath+fileName，1）的key-value对。第二，combiner汇总后将key设为单词，value设为fileName+词频。第三，reducer节点汇总value中的属于同一个单词的fileName+词频，生成文档列表(knn/stage1)，形如:</br>不无关系	negative67.txt:1;positive368.txt:1;neutral144.txt:1;positive332.txt:1;negative183.txt:1;neutral463.txt:1;positive378.txt:1;</br>
-</br>
+  - KNN方法分类<br>
+       * (1)首先，要对数据进行文本向量化，寻找工具将输入文件的格式转换为utf-8，解决乱码问题。而后将三个文件夹下的文件传入java文件(knn/inver/knn.java)当中进行类似文档倒排索引的处理。第一，mapper节点进行分词，并得到当前文件的文件名和父文件夹名，发送（word+filePath+fileName，1）的key-value对。第二，combiner汇总后将key设为单词，value设为fileName+词频。第三，reducer节点汇总value中的属于同一个单词的fileName+词频，生成文档列表(knn/stage1)，形如:</br>不无关系	negative67.txt:1;positive368.txt:1;neutral144.txt:1;positive332.txt:1;negative183.txt:1;neutral463.txt:1;positive378.txt:1;</br>
     * (2)生成文档列表后，将其(knn/stage1)作为输入文件输入(knn/knn/src/knn3.java)计算每个单词--文档的TF-IDF值。第一，mapper节点对于输入文件进行处理,维护全局变量index，将每个单词替换为index;利用字符串split函数将单词后的文档拆分出来发送(单词index+filename,词频)的key-value对。第二，combiner节点汇总计算具体的TF-IDF值,发送(单词index+filename,tf_idf值)的key-value对。第三，reducer节点汇总并按照固定格式输出(knn/tf_idf),形如:</br>negative86	17705:761.308418750991</br>
 </br>
     * (3)计算出tf_idf值之后，需要汇总形成文本向量化向量格式，将(knn/tf_idf)作为输入(knn/knn/src/knn4.java)汇总形成文本向量化。第一，mapper节点发送(filename,单词index+tf_idf值)的key-value对。第二，相同key值会被发送到同一个combiner节点，故在combiner当中进行汇总，将同一个filename的value值都连接起来，发送连接后的key-value对。第三，reducer输出，并根据tf-idf值直接选择特征(knn/text vector)</br>
-</br>
     * (4)完成文本向量化后，将(knn/text vector)输入到(knn/knn/src/knn5.java)进行knn计算。第一，main函数读入训练集数据，并通过conf.set函数将读入的训练集数据传给mapper节点。第二，mapper按行读入需要预测的数据（文本向量化处理后的）,遍历训练集的数据与所有数据计算距离，并发送(filename,train类型+距离)的key-value对。第二，combiner节点，提取距离值，根据距离该节点最近的n个节点投票决定该节点的类型，输出(filename,类型)的key-value对。第三，reducer节点，汇总输出(knn/final)。完成分类预测任务。</br>
 ![程序流程图1](https://github.com/WangKe2333/Project2/raw/master/picture/程序流程图1.png)</br>
 ![程序流程图2](https://github.com/WangKe2333/Project2/raw/master/picture/程序流程图2.png)</br>
