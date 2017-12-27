@@ -70,8 +70,8 @@ Java:实验设计说明</br>
 ----------------------------
 + 主要设计思路</br>
 </br>
-   - KNN方法分类<br>
-       * (1)首先，要对数据进行文本向量化，寻找工具将输入文件的格式转换为utf-8，解决乱码问题。而后将三个文件夹下的文件传入java文件(knn/inver/knn.java)当中进行类似文档倒排索引的处理。第一，mapper节点进行分词，并得到当前文件的文件名和父文件夹名，发送（word+filePath+fileName，1）的key-value对。第二，combiner汇总后将key设为单词，value设为fileName+词频。第三，reducer节点汇总value中的属于同一个单词的fileName+词频，生成文档列表(knn/stage1)，形如:</br>不无关系	negative67.txt:1;positive368.txt:1;neutral144.txt:1;positive332.txt:1;negative183.txt:1;neutral463.txt:1;positive378.txt:1;</br>
+1. KNN方法分类<br>
+       + (1)首先，要对数据进行文本向量化，寻找工具将输入文件的格式转换为utf-8，解决乱码问题。而后将三个文件夹下的文件传入java文件(knn/inver/knn.java)当中进行类似文档倒排索引的处理。第一，mapper节点进行分词，并得到当前文件的文件名和父文件夹名，发送（word+filePath+fileName，1）的key-value对。第二，combiner汇总后将key设为单词，value设为fileName+词频。第三，reducer节点汇总value中的属于同一个单词的fileName+词频，生成文档列表(knn/stage1)，形如:</br>不无关系	negative67.txt:1;positive368.txt:1;neutral144.txt:1;positive332.txt:1;negative183.txt:1;neutral463.txt:1;positive378.txt:1;</br>
 </br>
     * (2)生成文档列表后，将其(knn/stage1)作为输入文件输入(knn/knn/src/knn3.java)计算每个单词--文档的TF-IDF值。第一，mapper节点对于输入文件进行处理,维护全局变量index，将每个单词替换为index;利用字符串split函数将单词后的文档拆分出来发送(单词index+filename,词频)的key-value对。第二，combiner节点汇总计算具体的TF-IDF值,发送(单词index+filename,tf_idf值)的key-value对。第三，reducer节点汇总并按照固定格式输出(knn/tf_idf),形如:</br>negative86	17705:761.308418750991</br>
 </br>
