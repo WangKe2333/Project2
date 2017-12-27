@@ -264,11 +264,11 @@ Java:实验设计说明</br>
 ![text2](https://github.com/WangKe2333/Project2/raw/master/picture/textbayes.png)
 + 预测集(knn)</br>
 ![pro1](https://github.com/WangKe2333/Project2/raw/master/picture/pro1.png)
-+ 预测结果(knn)</br>
++ 部分预测结果(knn)</br>
 ![final1](https://github.com/WangKe2333/Project2/raw/master/picture/final1.png)
 + 预测集(bayes)</br>
 ![pro2](https://github.com/WangKe2333/Project2/raw/master/picture/pro2.png)
-+ 预测结果(bayes)</br>
++ 部分预测结果(bayes)</br>
 ![final2](https://github.com/WangKe2333/Project2/raw/master/picture/final2.png)
 + 训练结果1(bayes2)</br>
 ![pro3](https://github.com/WangKe2333/Project2/raw/master/picture/text1.png)
@@ -284,7 +284,7 @@ Java:实验设计说明</br>
 ![text1](https://github.com/WangKe2333/Project2/raw/master/picture/2.png)
 
 
-project1过程中遇到的问题及思考</br>
+project2过程中遇到的问题及思考</br>
 -------------------------------------
 + 进行了Python和Java的对比，虽然两种语言在细微之处的不同de了好久的bug（比如Python当中的split和Java中的split一个考虑最后一个分隔符一个不考虑），但是切实的体会到了两种编程语言与MapReduce的融合度和其中的差别，两种语言在实现并行化的思想上面也有细微的不同，Java明显更加符合设计者最初对于并行化实现的设计，所以使用起来更加自然，Python提供了后续加进去的API，在融合上自然没有那么自然；程序设计的思想基本相同最终的结果自然也差别不大，最大的差别在于两种语言我使用的分词器不一样，在这方面引起了一些最终结果的差距
 + 本次实验中最有趣也是最有挑战性的地方在于算法和程序思路需要自己设计，我也在这个过程当中体会到了大数据并行化MapReduce的思想和方法，对于所学的知识和key-value对的设计有了更加深刻的理解，感觉自己通过此次思考和训练收获很大，Java编程也越来越熟练了</br>
