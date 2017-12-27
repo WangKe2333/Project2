@@ -2,14 +2,17 @@
 title: "Project1 Mapreduce高级编程"
 author: "wangke"
 date: "2017年12月16日"
-output: pdf_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
-(更新 Python版本的实现)</br>
-在完成基本的要求之后,看到很多同学之前使用Python版本的MapReduce，我也想要尝试学习一下，于是我又将KNN和朴素贝叶斯用Python重新实现了一遍，相关代码已经放在了project2 的Python文件夹下，基本的实现思路与Java相同</br>
-在Java和Python两个版本的比较当中，Java的Key-value对使用更加方便，Python利用标准化的sys.stdin和streamming jar包实现，在key-value对的实现上，需要自己写迭代器group相同的key值对相应的value值进行加总等等处理。</br>
-在速度上两者区别也很明显，Java明显运行的比Python要快许多（在我的电脑上），越是调用Python相应的第三方库等等就越是慢~，比如Python的jieba分词，虽然方便，分的却比较慢</br>
-但Python仍然是有很多比较好用的字符串处理接口，在写程序的时候很是方便，也极大的减少了代码量，python的代码量大概只在Java的1/2左右</br>
+创新：比较Python和Java的MapReduce(更新 Python版本的实现)</br>
+------------------------------
++ 在完成基本的要求之后,看到很多同学之前使用Python版本的MapReduce，我也想要尝试学习一下，于是我又将KNN和朴素贝叶斯用Python重新实现了一遍，相关代码已经放在了project2 的Python文件夹下，基本的实现思路与Java相同</br>
++ 在Java和Python两个版本的比较当中，Java的Key-value对使用更加方便，Python利用标准化的sys.stdin和streamming jar包实现，在key-value对的实现上，需要自己写迭代器group相同的key值对相应的value值进行加总等等处理。</br>
++ 在速度上两者区别也很明显，Java明显运行的比Python要快许多（在我的电脑上），越是调用Python相应的第三方库等等就越是慢~，比如Python的jieba分词，虽然方便，分的却比较慢</br>
++ 但Python仍然是有很多比较好用的字符串处理接口，在写程序的时候很是方便，也极大的减少了代码量，python的代码量大概只在Java的1/2左右</br>
 
 迭代器实现相应的key-value对group
 ```{}
